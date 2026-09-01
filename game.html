@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  canvas{display:block}
+  #hud{position:fixed;top:10px;left:12px;color:#4f8;font:13px monospace;opacity:.7}
+</style>
+</head>
+<body>
+<div id="hud">WASD / стрелки — двигать</div>
+<canvas id="c"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+let W, H;
+function resize(){ W = c.width = innerWidth; H = c.height = innerHeight; }
+resize(); addEventListener('resize', resize);
+
+// звёзды
+const stars = Array.from({length: 140}, () => ({
+  x: Math.random()*W, y: Math.random()*H,
+  z: Math.random()*1.5 + .3
+}));
+
+// игрок
+const p = { x: W/2, y: H/2, vx: 0, vy: 0 };
+const keys = {};
+addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+addEventListener('keyup',   e => keys[e.key.toLowerCase()] = false);
+
+function loop(){
+  // фон
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,W,H);
+
+  // звёзды дрейфуют
+  ctx.fillStyle = '#fff';
+  for(const s of stars){
+    s.y += s.z;
+    if(s.y > H){ s.y = 0; s.x = Math.random()*W; }
+    ctx.globalAlpha = s.z/1.8;
+    ctx.fillRect(s.x, s.y, s.z, s.z);
+  }
+  ctx.globalAlpha = 1;
+
+  // управление
+  const a = .5;
+  if(keys['a']||keys['arrowleft'])  p.vx -= a;
+  if(keys['d']||keys['arrowright']) p.vx += a;
+  if(keys['w']||keys['arrowup'])    p.vy -= a;
+  if(keys['s']||keys['arrowdown'])  p.vy += a;
+  p.vx *= .92; p.vy *= .92;
+  p.x += p.vx; p.y += p.vy;
+  p.x = Math.max(0, Math.min(W, p.x));
+  p.y = Math.max(0, Math.min(H, p.y));
+
+  // игрок
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(Math.atan2(p.vy, p.vx));
+  ctx.fillStyle = '#4f8';
+  ctx.beginPath();
+  ctx.moveTo(14,0); ctx.lineTo(-10,-8); ctx.lineTo(-6,0); ctx.lineTo(-10,8);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
